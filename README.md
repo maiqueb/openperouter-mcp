@@ -2,7 +2,7 @@
 
 ## The tools
 This repo provides 2 different tools:
-- `extract_leaf_configs.sh`
+- `extract-leaf-configs.sh`
 - `capture-traffic.sh`
 
 ### Extract router's running configurations

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "openperouter": {
+      "command": "./build/openperouter-mcp",
+      "env": {}
+    }
+  }
+}

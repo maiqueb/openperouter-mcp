@@ -1,7 +1,55 @@
 # openperouter-mcp
 
-## The tools
-This repo provides 2 different tools:
+MCP (Model Context Protocol) server for OpenPERouter tools, providing network debugging and configuration extraction capabilities for Claude Code.
+
+## MCP Server
+
+This repository includes a Go-based MCP server (`mcp-server`) that exposes the bash scripts as tools for Claude Code.
+
+### Building the MCP Server
+
+#### Native Build
+
+```sh
+go build -o mcp-server main.go
+# or using make
+make build
+```
+
+#### Container Build
+
+The project supports both Podman (default) and Docker for containerization:
+
+```sh
+# Build with podman (default)
+make container-build
+
+# Build with docker
+make CONTAINER_RUNTIME=docker container-build
+
+# Run the container
+make container-run
+
+# Or with docker
+make CONTAINER_RUNTIME=docker container-run
+```
+
+The old `docker-build` and `docker-run` targets are still available for backward compatibility.
+
+### MCP Tools Available
+
+The MCP server exposes three tools:
+
+1. **extract_leaf_configs** - Extracts FRR running configurations from all leaf nodes
+2. **capture_traffic** - Captures network traffic from cluster nodes and spine router
+3. **install_tshark** - Installs tshark prerequisite on all Kubernetes cluster nodes
+
+### Using with Claude Code
+
+The MCP server is configured in the openperouter project at `.claude/mcp.json`. After building, restart Claude Code to load the tools.
+
+## The tools (Direct Usage)
+This repo provides 2 different bash scripts that can also be used directly:
 - `extract-leaf-configs.sh`
 - `capture-traffic.sh`
 

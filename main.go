@@ -16,9 +16,6 @@ var extractLeafConfigsScript string
 //go:embed scripts/capture-traffic.sh
 var captureTrafficScript string
 
-//go:embed scripts/install-tshark.sh
-var installTsharkScript string
-
 // JSON-RPC 2.0 types
 type JSONRPCRequest struct {
 	JSONRPC string          `json:"jsonrpc"`
@@ -157,7 +154,7 @@ func (s *MCPServer) handleToolsList(id interface{}) JSONRPCResponse {
 		},
 		{
 			Name:        "capture_traffic",
-			Description: "Captures network traffic from Kubernetes cluster nodes and spine router using tshark. Requires tshark to be installed (use install_tshark first).",
+			Description: "Captures network traffic from Kubernetes cluster nodes and spine router using tshark. Automatically installs tshark on nodes if needed.",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]interface{}{
@@ -171,14 +168,6 @@ func (s *MCPServer) handleToolsList(id interface{}) JSONRPCResponse {
 					},
 				},
 				Required: []string{"output_dir"},
-			},
-		},
-		{
-			Name:        "install_tshark",
-			Description: "Installs tshark on all Kubernetes cluster nodes. This is a prerequisite for using capture_traffic.",
-			InputSchema: InputSchema{
-				Type:       "object",
-				Properties: map[string]interface{}{},
 			},
 		},
 	}
@@ -199,8 +188,6 @@ func (s *MCPServer) handleToolCall(id interface{}, params CallToolParams) JSONRP
 		result = s.extractLeafConfigs()
 	case "capture_traffic":
 		result = s.captureTraffic(params.Arguments)
-	case "install_tshark":
-		result = s.installTshark()
 	default:
 		return s.errorResponse(id, -32602, "Unknown tool: "+params.Name)
 	}
@@ -273,26 +260,6 @@ func (s *MCPServer) captureTraffic(args map[string]interface{}) CallToolResult {
 			Content: []ContentItem{{
 				Type: "text",
 				Text: fmt.Sprintf("Error executing capture-traffic.sh: %v\nOutput: %s", err, output),
-			}},
-			IsError: true,
-		}
-	}
-
-	return CallToolResult{
-		Content: []ContentItem{{
-			Type: "text",
-			Text: output,
-		}},
-	}
-}
-
-func (s *MCPServer) installTshark() CallToolResult {
-	output, err := executeScript(installTsharkScript, nil, nil)
-	if err != nil {
-		return CallToolResult{
-			Content: []ContentItem{{
-				Type: "text",
-				Text: fmt.Sprintf("Error executing install-tshark.sh: %v\nOutput: %s", err, output),
 			}},
 			IsError: true,
 		}

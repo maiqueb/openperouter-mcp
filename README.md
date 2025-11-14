@@ -38,11 +38,14 @@ The old `docker-build` and `docker-run` targets are still available for backward
 
 ### MCP Tools Available
 
-The MCP server exposes three tools:
+The MCP server exposes two tools:
 
-1. **extract_leaf_configs** - Extracts FRR running configurations from all leaf nodes
-2. **capture_traffic** - Captures network traffic from cluster nodes and spine router
-3. **install_tshark** - Installs tshark prerequisite on all Kubernetes cluster nodes
+1. **extract_leaf_configs** - Extracts FRR running configurations from all leaf nodes in the CLAB topology. Configurations are saved to a timestamped directory.
+
+2. **capture_traffic** - Captures network traffic from Kubernetes cluster nodes and spine router using tshark. Automatically installs tshark on nodes if needed.
+   - Parameters:
+     - `output_dir` (required): Directory where capture files will be saved
+     - `capture_filter` (optional): Tshark capture filter (e.g., 'arp or icmp'). Defaults to capturing all traffic.
 
 ### Using with Claude Code
 
@@ -63,18 +66,15 @@ The user should just invoke the script:
 ```
 
 ### Capture traffic
-This tool has a requirement: `tshark` must be installed in all the Kubernetes
-cluster's nodes.
+This tool automatically installs `tshark` on all Kubernetes cluster nodes if not already present.
 
-For that, you must execute the `install-tshark.sh` script before running it.
-
-Once that is finished, you can just run the tool; the example below would
-capture all the arp or ICMP packets in the Kubernetes cluster nodes, plus
-in the spine router:
+The example below captures all ARP or ICMP packets in the Kubernetes cluster nodes, plus the spine router:
 ```sh
 mkdir arp-or-icmp # the destination for the captures
 CAPTURE_FILTER="arp or icmp" ./capture-traffic.sh arp-or-icmp
 ```
 
 The user should `ctrl+c` to stop the capture when they're ready.
+
+**Note**: The script now automatically detects the package manager (apt-get, yum, or apk) in each container and installs tshark as needed, eliminating the manual installation step.
 

@@ -38,14 +38,16 @@ The old `docker-build` and `docker-run` targets are still available for backward
 
 ### MCP Tools Available
 
-The MCP server exposes two tools:
+The MCP server exposes three tools:
 
 1. **extract_leaf_configs** - Extracts FRR running configurations from all leaf nodes in the CLAB topology. Configurations are saved to a timestamped directory.
 
-2. **capture_traffic** - Captures network traffic from Kubernetes cluster nodes and spine router using tshark. Automatically installs tshark on nodes if needed.
+2. **start_traffic_capture** - Starts capturing network traffic from Kubernetes cluster nodes and spine router using tshark. This operation starts in the background and returns immediately. Automatically installs tshark on nodes if needed.
    - Parameters:
      - `output_dir` (optional): Directory where capture files will be saved. Defaults to `./captures/capture_<timestamp>`.
      - `capture_filter` (optional): Tshark capture filter (e.g., 'arp or icmp'). Defaults to capturing all traffic.
+
+3. **stop_traffic_capture** - Stops all running traffic captures, retrieves the pcap files from containers, and saves them to the host directory. This will gracefully terminate all tshark processes and copy the capture files.
 
 ### Using with Claude Code
 

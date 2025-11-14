@@ -5,6 +5,50 @@ set -e
 # Set capture filter from environment variable (default to ICMP)
 CAPTURE_FILTER="${CAPTURE_FILTER:-icmp}"
 
+# Function to ensure tshark is installed in containers
+ensure_tshark() {
+    echo "Checking tshark installation in containers..."
+    echo "============================================================="
+
+    for container in "${containers[@]}"; do
+        # Check if container exists and is running
+        if ! docker ps --format "table {{.Names}}" | grep -q "^$container$"; then
+            echo "  Warning: Container $container not found or not running"
+            echo ""
+            continue
+        fi
+
+        # Check if tshark is installed
+        if ! docker exec "$container" which tshark > /dev/null 2>&1; then
+            echo "  tshark not found in $container, installing..."
+
+            # Detect package manager and install tshark
+            if docker exec "$container" which apt-get > /dev/null 2>&1; then
+                docker exec "$container" apt-get update > /dev/null 2>&1
+                docker exec "$container" apt-get install -y tshark > /dev/null 2>&1
+            elif docker exec "$container" which yum > /dev/null 2>&1; then
+                docker exec "$container" yum install -y wireshark > /dev/null 2>&1
+            elif docker exec "$container" which apk > /dev/null 2>&1; then
+                docker exec "$container" apk add --no-cache tshark > /dev/null 2>&1
+            else
+                echo "  ✗ Unknown package manager in container $container"
+                continue
+            fi
+
+            # Verify installation
+            if docker exec "$container" which tshark > /dev/null 2>&1; then
+                echo "  ✓ tshark installed successfully in $container"
+            else
+                echo "  ✗ Failed to install tshark in $container"
+            fi
+        else
+            echo "  ✓ tshark already installed in $container"
+        fi
+        echo ""
+    done
+    echo ""
+}
+
 # Check for required positional parameter
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <host_output_directory>"
@@ -98,6 +142,9 @@ cleanup() {
 
 # Set up signal handling for cleanup
 trap cleanup SIGINT SIGTERM
+
+# Ensure tshark is installed
+ensure_tshark
 
 echo "Extracting FRR container PIDs and starting tshark captures..."
 echo "Using capture filter: $CAPTURE_FILTER"

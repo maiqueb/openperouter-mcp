@@ -54,7 +54,7 @@ extract_kind_leaf_config() {
         echo -e "  ${BLUE}Checking node: $node${NC}"
         
         # Get FRR container IDs inside the kind node
-        local frr_container_ids=$(docker exec "$node" crictl ps --name frr -q 2>/dev/null || true)
+        local frr_container_ids=$(docker exec "$node" crictl ps --name "^frr$" -q 2>/dev/null || true)
         
         if [[ -n "$frr_container_ids" ]]; then
             local count=1

@@ -52,7 +52,7 @@ deps:
 	$(GOMOD) tidy
 
 ## install: Install the binary to GOPATH/bin
-install:
+install: build
 	@echo "Installing $(BINARY_NAME)..."
 	$(GOCMD) install $(LDFLAGS) .
 	@echo "Installed to $(GOPATH)/bin/$(BINARY_NAME)"

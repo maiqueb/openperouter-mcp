@@ -49,10 +49,12 @@ ensure_tshark() {
     echo ""
 }
 
-# Check for required positional parameter
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 <host_output_directory>"
+# Check for optional positional parameter
+if [ $# -gt 1 ]; then
+    echo "Usage: $0 [host_output_directory]"
     echo "Example: $0 /tmp/captures"
+    echo ""
+    echo "If no directory is specified, a timestamped directory will be created automatically."
     echo ""
     echo "Environment variables:"
     echo "  CAPTURE_FILTER - tshark capture filter (default: icmp)"
@@ -60,7 +62,13 @@ if [ $# -ne 1 ]; then
     exit 1
 fi
 
-host_output_dir="$1"
+# Generate timestamped directory if not provided
+if [ $# -eq 0 ]; then
+    host_output_dir="./captures/capture_$(date +%Y%m%d_%H%M%S)"
+    echo "No output directory specified, using: $host_output_dir"
+else
+    host_output_dir="$1"
+fi
 
 # Validate and create output directory if needed
 if [ ! -d "$host_output_dir" ]; then

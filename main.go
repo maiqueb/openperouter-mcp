@@ -160,14 +160,14 @@ func (s *MCPServer) handleToolsList(id interface{}) JSONRPCResponse {
 				Properties: map[string]interface{}{
 					"output_dir": map[string]interface{}{
 						"type":        "string",
-						"description": "Directory where capture files will be saved",
+						"description": "Directory where capture files will be saved. Optional, defaults to './captures/capture_<timestamp>'.",
 					},
 					"capture_filter": map[string]interface{}{
 						"type":        "string",
 						"description": "Tshark capture filter (e.g., 'arp or icmp'). Optional, defaults to capturing all traffic.",
 					},
 				},
-				Required: []string{"output_dir"},
+				Required: []string{},
 			},
 		},
 	}
@@ -234,19 +234,14 @@ func (s *MCPServer) extractLeafConfigs() CallToolResult {
 }
 
 func (s *MCPServer) captureTraffic(args map[string]interface{}) CallToolResult {
-	outputDir, ok := args["output_dir"].(string)
-	if !ok {
-		return CallToolResult{
-			Content: []ContentItem{{
-				Type: "text",
-				Text: "Missing or invalid 'output_dir' argument",
-			}},
-			IsError: true,
-		}
+	// Build the command with optional output directory argument
+	var scriptWithArgs string
+	if outputDir, ok := args["output_dir"].(string); ok && outputDir != "" {
+		scriptWithArgs = fmt.Sprintf("%s %s", captureTrafficScript, outputDir)
+	} else {
+		// No output directory specified, let script auto-generate timestamped directory
+		scriptWithArgs = captureTrafficScript
 	}
-
-	// Build the command with the output directory argument
-	scriptWithArgs := fmt.Sprintf("%s %s", captureTrafficScript, outputDir)
 
 	// Set CAPTURE_FILTER environment variable if provided
 	var env []string

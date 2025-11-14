@@ -44,7 +44,7 @@ The MCP server exposes two tools:
 
 2. **capture_traffic** - Captures network traffic from Kubernetes cluster nodes and spine router using tshark. Automatically installs tshark on nodes if needed.
    - Parameters:
-     - `output_dir` (required): Directory where capture files will be saved
+     - `output_dir` (optional): Directory where capture files will be saved. Defaults to `./captures/capture_<timestamp>`.
      - `capture_filter` (optional): Tshark capture filter (e.g., 'arp or icmp'). Defaults to capturing all traffic.
 
 ### Using with Claude Code
@@ -68,7 +68,16 @@ The user should just invoke the script:
 ### Capture traffic
 This tool automatically installs `tshark` on all Kubernetes cluster nodes if not already present.
 
-The example below captures all ARP or ICMP packets in the Kubernetes cluster nodes, plus the spine router:
+#### Basic usage (auto-generated timestamped directory):
+```sh
+# Captures to ./captures/capture_<timestamp>
+./capture-traffic.sh
+
+# With custom filter
+CAPTURE_FILTER="arp or icmp" ./capture-traffic.sh
+```
+
+#### Custom output directory:
 ```sh
 mkdir arp-or-icmp # the destination for the captures
 CAPTURE_FILTER="arp or icmp" ./capture-traffic.sh arp-or-icmp

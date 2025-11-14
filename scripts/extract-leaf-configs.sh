@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to extract FRR running configurations from all leaf nodes
+# Script to extract FRR running configurations from all leaf nodes and spine routers
 # Handles both regular containerlab FRR containers and FRR containers inside kind clusters
 
 set -e
@@ -13,19 +13,20 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Create output directory with timestamp
-OUTPUT_DIR="leaf_configs_$(date +%Y%m%d_%H%M%S)"
+OUTPUT_DIR="network_configs_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$OUTPUT_DIR"
 
-echo -e "${GREEN}=== Extracting FRR configurations from all leaf nodes ===${NC}"
+echo -e "${GREEN}=== Extracting FRR configurations from all leaf nodes and spine routers ===${NC}"
 echo -e "${BLUE}Output directory: $OUTPUT_DIR${NC}"
 echo
 
 # Function to extract config from regular containerlab FRR container
-extract_regular_leaf_config() {
+extract_regular_config() {
     local container_name="$1"
     local output_file="$2"
     
-    echo -e "${YELLOW}Processing regular leaf: $container_name${NC}"
+    local device_type="$3"
+    echo -e "${YELLOW}Processing regular ${device_type}: $container_name${NC}"
     
     if docker exec "$container_name" vtysh -c "show running-config" > "$output_file" 2>/dev/null; then
         echo -e "${GREEN}  ✓ Config saved to $output_file${NC}"
@@ -80,6 +81,24 @@ extract_kind_leaf_config() {
     done
 }
 
+# Extract configs from regular containerlab FRR spine routers
+echo -e "${GREEN}=== Processing regular containerlab spine routers ===${NC}"
+spine_routers=$(docker ps --filter "name=clab-kind-spine" --format "{{.Names}}" | grep -E "spine" || true)
+
+if [[ -n "$spine_routers" ]]; then
+    while IFS= read -r spine; do
+        if [[ -n "$spine" ]]; then
+            # Extract just the spine name (remove clab-kind- prefix)
+            spine_name=${spine#clab-kind-}
+            output_file="$OUTPUT_DIR/${spine_name}_config.txt"
+            extract_regular_config "$spine" "$output_file" "spine"
+        fi
+    done <<< "$spine_routers"
+else
+    echo -e "${YELLOW}No regular spine containers found${NC}"
+fi
+echo
+
 # Extract configs from regular containerlab FRR leaf containers
 echo -e "${GREEN}=== Processing regular containerlab leaf nodes ===${NC}"
 regular_leaves=$(docker ps --filter "name=clab-kind-leaf" --format "{{.Names}}" | grep -E "leaf[A-Z]|leafkind" || true)
@@ -90,7 +109,7 @@ if [[ -n "$regular_leaves" ]]; then
             # Extract just the leaf name (remove clab-kind- prefix)
             leaf_name=${leaf#clab-kind-}
             output_file="$OUTPUT_DIR/${leaf_name}_config.txt"
-            extract_regular_leaf_config "$leaf" "$output_file"
+            extract_regular_config "$leaf" "$output_file" "leaf"
         fi
     done <<< "$regular_leaves"
 else
